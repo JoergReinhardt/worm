@@ -13,10 +13,6 @@ const (
 	RIGHT
 )
 
-var DIRECTION = UP
-var WIDTH = 79
-var HIGHT = 79
-
 type segment struct {
 	x, y int
 	tail bool
@@ -71,11 +67,11 @@ type worm struct {
 	*segment
 }
 
-func (w worm) predict() (x, y int) {
+func (w worm) predict(s *state) (x, y int) {
 	ox, oy := w.segment.x, w.segment.y
 
 	// set new position for this segment
-	switch DIRECTION {
+	switch s.move {
 	case UP:
 		y = oy - 1
 		x = ox
@@ -93,25 +89,16 @@ func (w worm) predict() (x, y int) {
 }
 
 // set to middle of field
-func newWorm() *worm {
+func newWorm(s *state) *worm {
 	return &worm{
 		segment: &segment{
-			x:    WIDTH / 2,
-			y:    HIGHT / 2,
+			x:    s.width / 2,
+			y:    s.hight / 2,
 			tail: true,
 			next: nil,
 		},
 	}
 }
-
-///////////////////////////////////////////////////////
-type color uint
-
-const (
-	BLANK color = 0
-	WORM  color = 1 << iota
-	CHERRY
-)
 
 ///////////////////////////////////////////////////////
 type cherry struct {
@@ -127,45 +114,53 @@ func (c cherry) picked(x, y int) bool {
 	}
 }
 
-//go:generate stringer -type State
-type State uint
+type state struct {
+	stat  GameStat
+	move  dir
+	width int
+	hight int
+}
+
+//go:generate stringer -type GameStat
+type GameStat uint8
 
 const (
-	INIT State = 0
-	RUN  State = 1 << iota
+	INIT GameStat = 0
+	RUN  GameStat = 1 << iota
 	PAUSE
 	GAME_OVER
 )
 
 type Game struct {
-	State
+	*state
 	*cherry
 	*worm
 }
 
 func NewGame() *Game {
-	return &Game{0, &cherry{20, 20}, newWorm()}
+	s := &state{0, UP, 79, 39}
+	return &Game{s, &cherry{20, 20}, newWorm(s)}
 }
 
 func (g *Game) wrap(xi, yi int) (xo, yo int) {
 	xo, yo = xi, yi
 	if xi < 0 {
-		xo = WIDTH - 1
+		xo = g.state.width - 1
 	}
-	if xi == WIDTH {
+	if xi == g.state.width {
 		xo = 0
 	}
 	if yi < 0 {
-		yo = HIGHT - 1
+		yo = g.state.hight - 1
 	}
-	if yi == HIGHT {
+	if yi == g.state.hight {
 		yo = 0
 	}
 	return xo, yo
 }
 func (g *Game) move() {
 	// predict next positiom
-	x, y := (*g.worm).predict()
+	x, y := (*g.worm).predict(g.state)
 	x, y = (*g).wrap(x, y)
 	// if next position on cherry
 	if (*g.cherry).picked(x, y) {
@@ -174,7 +169,7 @@ func (g *Game) move() {
 	}
 	// GAME OVER
 	if (*g.worm).collides(x, y) {
-		(*g).State = GAME_OVER
+		(*g.state).stat = GAME_OVER
 		return
 	}
 	(*g.worm).move(x, y)
