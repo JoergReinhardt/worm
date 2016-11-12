@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 type dir uint8
@@ -62,6 +63,9 @@ func (s *segment) collides(x, y int) bool {
 		return false
 	}
 }
+
+// takes a closure over termbox SetCell and passes the coordinates of each
+// segment.
 func (s *segment) render(fn func(x, y int)) {
 	fn(s.x, s.y)
 	if s.tail {
@@ -123,6 +127,7 @@ func (c cherry) picked(x, y int) bool {
 }
 
 type state struct {
+	speed time.Duration
 	stat  GameStat
 	move  dir
 	width int
@@ -146,7 +151,7 @@ type Game struct {
 }
 
 func NewGame() *Game {
-	s := &state{0, UP, 79, 39}
+	s := &state{250 * time.Millisecond, 0, UP, 79, 39}
 	return &Game{s, &cherry{20, 20}, newWorm(s)}
 }
 
