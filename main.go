@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-const animationSpeed = 250 * time.Millisecond
+const animationSpeed = 10 * time.Millisecond
+
+var wormSpeed = 250 * time.Millisecond
 
 func main() {
 	err := termbox.Init()
@@ -24,6 +26,26 @@ func main() {
 	g := NewGame()
 	render(g)
 
+	// game loop (background)
+	go func() {
+		(*g.state).stat = RUN
+		for {
+			(*g).move()
+			render(g)
+			time.Sleep(wormSpeed)
+			// exit, if game over
+			if (*g.state).stat == PAUSE {
+				for {
+					time.Sleep(animationSpeed)
+					if (*g.state).stat != PAUSE {
+						break
+					}
+				}
+			}
+		}
+	}()
+
+	// event/render loop (blocks)
 	for {
 		ev := <-eventQueue
 		if ev.Type == termbox.EventKey {
@@ -37,13 +59,23 @@ func main() {
 			case ev.Key == termbox.KeyArrowRight || ev.Ch == 'l':
 				(*g.state).move = RIGHT
 			case ev.Ch == 'p':
-				(*g.state).stat = PAUSE
+				// toggle pause/run
+				if g.state.stat == PAUSE {
+					(*g.state).stat = RUN
+				} else {
+					(*g.state).stat = PAUSE
+				}
 			case ev.Key == termbox.KeyEsc || ev.Ch == 'q':
 				return
 			}
 		}
-		(*g).move()
+		// exit, if game over
+		if (*g.state).stat == GAME_OVER {
+			return
+		}
+
 		render(g)
 		time.Sleep(animationSpeed)
 	}
+
 }

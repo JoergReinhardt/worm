@@ -62,6 +62,14 @@ func (s *segment) collides(x, y int) bool {
 		return false
 	}
 }
+func (s *segment) render(fn func(x, y int)) {
+	fn(s.x, s.y)
+	if s.tail {
+		return
+	} else {
+		(*s.next).render(fn)
+	}
+}
 
 type worm struct {
 	*segment

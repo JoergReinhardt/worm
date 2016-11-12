@@ -15,20 +15,17 @@ const (
 )
 
 func render(g *Game) {
+	// painted, painted, painted… painted black
 	termbox.Clear(BLACK, BLACK)
-	for y := 0; y <= g.state.width; y++ {
-		for x := 0; x <= g.state.hight; x++ {
-			switch {
-			case (*g.cherry).picked(x, y): // set cherry
-				termbox.SetCell(x, y, 'O', BLACK, RED)
+	// render cherry
+	termbox.SetCell((*g.cherry).x,
+		(*g.cherry).y, 'O', BLACK, RED)
 
-			case (*g.worm).collides(x, y): // set worm segment
-				termbox.SetCell(x, y, '#', BLACK, GREEN)
-
-			default: // set all other cells to background
-				termbox.SetCell(x, y, ' ', BLACK, BLACK)
-			}
-		}
+	// callback closes over SetCell with proper bg & fg, gets x &y by worms render method.
+	var fn = func(x, y int) {
+		termbox.SetCell(x, y, '#', BLACK, GREEN)
 	}
+	// renders through callback
+	(*g.worm).render(fn)
 	termbox.Flush()
 }
