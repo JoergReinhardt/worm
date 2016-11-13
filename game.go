@@ -102,10 +102,11 @@ func (w worm) predict(s *state) (x, y int) {
 
 // set to middle of field
 func newWorm(s *state) *worm {
+	x, y := s.size()
 	return &worm{
 		segment: &segment{
-			x:    s.width / 2,
-			y:    s.hight / 2,
+			x:    x / 2,
+			y:    y / 2,
 			tail: true,
 			next: nil,
 		},
@@ -130,8 +131,7 @@ type state struct {
 	speed time.Duration
 	stat  GameStat
 	move  dir
-	width int
-	hight int
+	size  func() (x, y int)
 }
 
 //go:generate stringer -type GameStat
@@ -150,23 +150,24 @@ type Game struct {
 	*worm
 }
 
-func NewGame() *Game {
-	s := &state{250 * time.Millisecond, 0, UP, 79, 39}
+func NewGame(sfn func() (x, y int)) *Game {
+	s := &state{250 * time.Millisecond, 0, UP, sfn}
 	return &Game{s, &cherry{20, 20}, newWorm(s)}
 }
 
-func (g *Game) wrap(xi, yi int) (xo, yo int) {
+func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 	xo, yo = xi, yi
+	w, h := g.state.size()
 	if xi < 0 {
-		xo = g.state.width - 1
+		xo = w - 1
 	}
-	if xi == g.state.width {
+	if xi == w {
 		xo = 0
 	}
 	if yi < 0 {
-		yo = g.state.hight - 1
+		yo = h - 1
 	}
-	if yi == g.state.hight {
+	if yi == h {
 		yo = 0
 	}
 	return xo, yo
@@ -174,7 +175,7 @@ func (g *Game) wrap(xi, yi int) (xo, yo int) {
 func (g *Game) move() {
 	// predict next positiom
 	x, y := (*g.worm).predict(g.state)
-	x, y = (*g).wrap(x, y)
+	x, y = (*g).wrapBoard(x, y)
 	// if next position on cherry
 	if (*g.cherry).picked(x, y) {
 		// grow worm

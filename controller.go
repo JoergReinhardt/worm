@@ -14,7 +14,7 @@ func run() {
 		}
 	}()
 
-	g := NewGame()
+	g := NewGame(termbox.Size)
 	render(g)
 
 	// game loop (background)
