@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -119,6 +120,8 @@ type cherry struct {
 	y int
 }
 
+// indicates, if coordinates identical to cherrys coordinates, hence 'if the
+// cherry is picked'
 func (c cherry) picked(x, y int) bool {
 	if c.x == x && c.y == y {
 		return true
@@ -127,11 +130,27 @@ func (c cherry) picked(x, y int) bool {
 	}
 }
 
+// pops cherry at a new location
+func (c *cherry) pop(x, y int) {
+	(*c).x, (*c).y = x, y
+}
+
 type state struct {
 	speed time.Duration
 	stat  GameStat
 	move  dir
 	size  func() (x, y int)
+	rand  func() (x, y int)
+}
+
+func newState(sizeFn func() (x, y int), randFn func() (x, y int)) *state {
+	return &state{
+		250 * time.Millisecond,
+		INIT,
+		UP,
+		sizeFn,
+		randFn,
+	}
 }
 
 //go:generate stringer -type GameStat
@@ -150,9 +169,20 @@ type Game struct {
 	*worm
 }
 
-func NewGame(sfn func() (x, y int)) *Game {
-	s := &state{250 * time.Millisecond, 0, UP, sfn}
-	return &Game{s, &cherry{20, 20}, newWorm(s)}
+func NewGame(sizeFn func() (x, y int)) *Game {
+	// initialize random number generation
+	rand.Seed(23)
+	// build a closure to generate random x & y, within the range of width
+	// & hight of the board, given by the size functions Output, which this
+	// closure closes over.
+	randFn := func() (x, y int) {
+		w, h := sizeFn()
+		return rand.Intn(w), rand.Intn(h)
+	}
+	x, y := randFn()              // initial cherry position
+	s := newState(sizeFn, randFn) // allocate new state
+	// return game with all its components
+	return &Game{s, &cherry{x, y}, newWorm(s)}
 }
 
 func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
@@ -172,19 +202,25 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 	}
 	return xo, yo
 }
-func (g *Game) move() {
-	// predict next positiom
+func (g *Game) play() {
+	// predict worms next positiom
 	x, y := (*g.worm).predict(g.state)
+	// wrap board to a continuous manifold
 	x, y = (*g).wrapBoard(x, y)
-	// if next position on cherry
+	// IF CHERRY GOT PICKED
 	if (*g.cherry).picked(x, y) {
 		// grow worm
 		(*g.worm).grow()
+		// relocate cherry
+		(*g.cherry).pop(g.state.rand())
+		// raise worm speed by 10%
+		(*g.state).speed = (g.state.speed / 10) * 9
 	}
-	// GAME OVER
+	// IF SELF-COLLDISION → GAME OVER
 	if (*g.worm).collides(x, y) {
 		(*g.state).stat = GAME_OVER
 		return
 	}
+	// MOVE TO NEXT POSITION
 	(*g.worm).move(x, y)
 }

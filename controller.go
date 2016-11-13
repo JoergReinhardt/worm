@@ -7,38 +7,52 @@ import (
 
 func run() {
 
-	eventQueue := make(chan termbox.Event)
-	go func() {
-		for {
-			eventQueue <- termbox.PollEvent()
-		}
-	}()
-
+	// Allocate new game, pass termbox size as functional argument
 	g := NewGame(termbox.Size)
+	// render all worm segments and cherry once initially
 	render(g)
 
-	// game loop (background)
+	// game loop progresses the game in the background
 	go func() {
+		// set status to run
 		(*g.state).stat = RUN
 		for {
-			(*g).move()
-			render(g)
-			// move with worm speed
-			time.Sleep((*g.state).speed)
-
-			// if p is pressed, hold worm
+			// PAUSE MODE
+			// if p is pressed, toggle game state and hold loop
 			if (*g.state).stat == PAUSE {
 				for {
+					// check once per render cycle
 					time.Sleep(animationSpeed)
 					if (*g.state).stat != PAUSE {
 						break
 					}
 				}
 			}
+			// PLAY
+			//- detects colissions for next step
+			//- ends the game on colission of worm with itself (sets
+			//  state.stat to GAME_OVER)
+			//- grows the worm and speed on colission with cherry.
+			//- moves the worm one step
+			(*g).play()
+			//- accesses game state to read cherry position, passes
+			//callback closure to worms render method.
+			render(g)
+			// wait one worm speed duration until next step
+			time.Sleep((*g.state).speed)
 		}
 	}()
 
-	// event/render loop (blocks)
+	// the event queue yields keyboard events
+	eventQueue := make(chan termbox.Event)
+	// dplete event queue in the background
+	go func() {
+		for {
+			eventQueue <- termbox.PollEvent()
+		}
+	}()
+
+	// event retrieval and render loop. Blocks until game is stopped.
 	for {
 		ev := <-eventQueue
 		if ev.Type == termbox.EventKey {
@@ -52,7 +66,7 @@ func run() {
 			case ev.Key == termbox.KeyArrowRight || ev.Ch == 'l':
 				(*g.state).move = RIGHT
 			case ev.Ch == 'p':
-				// toggle pause/run
+				// toggle game state between pause & run
 				if g.state.stat == PAUSE {
 					(*g.state).stat = RUN
 				} else {
