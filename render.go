@@ -18,12 +18,12 @@ func render(g *Game) {
 	// painted, painted, painted… painted black
 	termbox.Clear(BLACK, BLACK)
 	// render cherry
-	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', BLACK, RED)
+	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, BLACK)
 
 	// callback closes over SetCell with proper bg & fg, gets x &y by worms
 	// render method.
-	var fn = func(x, y int) {
-		termbox.SetCell(x, y, '#', BLACK, GREEN)
+	var fn = func(x, y int, c rune) {
+		termbox.SetCell(x, y, c, GREEN, BLACK)
 	}
 	// renders through callback
 	(*g.worm).render(fn)

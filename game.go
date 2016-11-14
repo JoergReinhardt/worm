@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -13,124 +12,8 @@ const (
 	DOWN dir = 1 << iota
 	LEFT
 	RIGHT
+	MATCH
 )
-
-// each of worms segments holds it's own posisiton, a boolflag if there is a
-// next element and a pointer to that element (nil pointer if not present,
-// hence the bool flag for convienience.)
-type segment struct {
-	x, y int
-	tail bool
-	next *segment
-}
-
-// string and len as helpers during debug phase get not used anymore
-func (s segment) String() string {
-	var str = fmt.Sprint(s.x) + ", " + fmt.Sprint(s.y) + "\n"
-	if !s.tail {
-		str = str + s.next.String()
-	}
-	return str
-}
-
-// string and len as helpers during debug phase get not used anymore
-func (s segment) len() int {
-	if s.tail {
-		return 1
-	} else { // calculate length recursively
-		return s.next.len() + 1
-	}
-}
-
-// allocates a new segment and allocates it to 'next', if its the tail,
-// otherwise delegates that task to next element recursively.
-func (s *segment) grow() {
-	if s.tail { // try to add new tail element to this segment
-		(*s).tail = false // if this segment is tail, it is not any
-		// longer initialize new tail segment at current position
-		(*s).next = &segment{s.x, s.y, true, nil}
-	} else { // if not tail, deligate to next segment
-		(*s.next).grow()
-	}
-}
-
-// move to passed position and drag all childs along recursively.
-func (s *segment) move(x, y int) {
-	// safe old position
-	ox, oy := (*s).x, (*s).y
-	// move to new position
-	(*s).x, (*s).y = x, y
-	if !s.tail { // recursively call move for tail elements
-		(*s.next).move(ox, oy)
-	}
-}
-
-// checks if passed coordinates collide with the coordinates of this segment
-// and all it"s childs.
-func (s *segment) collides(x, y int) bool {
-	// when coordinates are identical, collide:
-	if s.x == x && s.y == y {
-		return true
-	}
-	if !s.tail { // when not tail, check for tail collision
-		return s.next.collides(x, y)
-	} else { // otherwise, return no collision
-		return false
-	}
-}
-
-// takes a closure over termbox SetCell with preset bf & fg color and char as
-// argument and calls it, passing elements current and all it's childs
-// coordinates recursesively.
-func (s *segment) render(fn func(x, y int)) {
-	fn(s.x, s.y)
-	if s.tail {
-		return
-	} else {
-		(*s.next).render(fn)
-	}
-}
-
-// worm is a singly linked list of segments. It's 'head' can predict it's next
-// position, according to current direction of movemen.
-type worm struct {
-	*segment
-}
-
-func (w worm) predict(s *state) (x, y int) {
-	// get current (old) position
-	ox, oy := w.segment.x, w.segment.y
-	// predict next position regarding current direction and position
-	switch s.move {
-	case UP:
-		y = oy - 1
-		x = ox
-	case DOWN:
-		y = oy + 1
-		x = ox
-	case LEFT:
-		x = ox - 1
-		y = oy
-	case RIGHT:
-		x = ox + 1
-		y = oy
-	}
-	// return predicted next position
-	return x, y
-}
-
-// center new worm at board
-func newWorm(s *state) *worm {
-	x, y := s.size()
-	return &worm{
-		segment: &segment{
-			x:    x / 2,
-			y:    y / 2,
-			tail: true,
-			next: nil,
-		},
-	}
-}
 
 ///////////////////////////////////////////////////////
 // nice jucy relocateable cherry as food for our worm
@@ -202,7 +85,7 @@ type Game struct {
 // allocate a new game
 func NewGame(sizeFn func() (x, y int)) *Game {
 	// initialize random number generation
-	rand.Seed(23)
+	rand.Seed(time.Now().Unix())
 	// build a closure to generate random x & y, within the range of width
 	// & hight of the board, given by the size functions Output, which this
 	// closure closes over.
@@ -237,10 +120,8 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 
 // does one worm move and all neccessary changes that follow by the new state.
 func (g *Game) play() {
-	// predict worms next positiom
-	x, y := (*g.worm).predict(g.state)
-	// wrap board to continuoum
-	x, y = (*g).wrapBoard(x, y)
+	// wrap board to continuoum, get final x & y
+	x, y := (*g).wrapBoard((*g.worm).predict(g.state.move))
 	// IF CHERRY GOT PICKED
 	if (*g.cherry).picked(x, y) {
 		// grow worm
@@ -256,5 +137,5 @@ func (g *Game) play() {
 		return
 	}
 	// MOVE TO NEXT POSITION
-	(*g.worm).move(x, y)
+	(*g.worm).move(x, y, g.state.move)
 }
