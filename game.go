@@ -101,6 +101,14 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 func (g *Game) play() {
 	// wrap board to continuoum, get final x & y
 	x, y := (*g).wrapBoard((*g.worm).predNextPos(g.state.move))
+	// IF SELF-COLLDISION → GAME OVER
+	if (*g.worm).collides(x, y) {
+		(*g.state).stat = GAME_OVER
+		return
+	}
+	// cherry needs to be relocatet, in case boardsize changed and cherry
+	// coordinates turn out to not be on the board anymore
+	(*g.cherry).x, (*g.cherry).y = (*g).wrapBoard((*g.cherry).x, (*g.cherry).y)
 	// IF CHERRY GOT PICKED
 	if (*g.cherry).picked(x, y) {
 		// grow worm
@@ -109,11 +117,6 @@ func (g *Game) play() {
 		(*g.cherry).pop(g.state.rand())
 		// raise worm speed by 10%
 		(*g.state).speed = (g.state.speed / 10) * 9
-	}
-	// IF SELF-COLLDISION → GAME OVER
-	if (*g.worm).collides(x, y) {
-		(*g.state).stat = GAME_OVER
-		return
 	}
 	// MOVE TO NEXT POSITION
 	(*g.worm).move(x, y, g.state.move)
