@@ -1,12 +1,26 @@
 package main
 
-import (
-	"fmt"
-)
+// the char a segment is showing, depends on the position of previous and next
+// segments position, which opens the opportunety for a map, utilising an
+// anonymous two field struct as it's key. (just because go can do that)
+var segChars = map[struct{ p, n dir }]rune{
+	struct{ p, n dir }{UP, DOWN}:    '┃',
+	struct{ p, n dir }{DOWN, UP}:    '┃',
+	struct{ p, n dir }{LEFT, RIGHT}: '━',
+	struct{ p, n dir }{RIGHT, LEFT}: '━',
+	struct{ p, n dir }{LEFT, UP}:    '┛',
+	struct{ p, n dir }{UP, LEFT}:    '┛',
+	struct{ p, n dir }{LEFT, DOWN}:  '┓',
+	struct{ p, n dir }{DOWN, LEFT}:  '┓',
+	struct{ p, n dir }{RIGHT, UP}:   '┗',
+	struct{ p, n dir }{UP, RIGHT}:   '┗',
+	struct{ p, n dir }{RIGHT, DOWN}: '┏',
+	struct{ p, n dir }{DOWN, RIGHT}: '┏',
+}
 
-// each of worms segments holds it's own posisiton, a boolflag if there is a
-// next element and a pointer to that element (nil pointer if not present,
-// hence the bool flag for convienience.)
+// each of worms segments holds it's own posisiton, the char to render, a
+// boolflag if there is a next element and a pointer to that element (nil
+// pointer if not present, hence the bool flag for convienience.)
 type segment struct {
 	x, y int
 	char rune
@@ -14,63 +28,45 @@ type segment struct {
 	next *segment
 }
 
-// string and len as helpers during debug phase get not used anymore
-func (s segment) String() string {
-	var str = fmt.Sprint(s.x) + ", " + fmt.Sprint(s.y) + "\n"
-	if !s.tail {
-		str = str + s.next.String()
-	}
-	return str
-}
-
-// string and len as helpers during debug phase get not used anymore
-func (s segment) len() int {
-	if s.tail {
-		return 1
-	} else { // calculate length recursively
-		return s.next.len() + 1
-	}
-}
-
 // checks if passed coordinates collide with the coordinates of this segment
-// and all it"s childs.
+// and all it"s children.
 func (s *segment) collides(x, y int) bool {
 	// when coordinates are identical, collide:
 	if s.x == x && s.y == y {
 		return true
 	}
-	if !s.tail { // when not tail, check for tail collision
-		return s.next.collides(x, y)
-	} else { // otherwise, return no collision
+	if s.tail { // otherwise, return no collision
 		return false
+	} else { // when not tail, check for tail collision
+		return s.next.collides(x, y)
 	}
 }
 
-// allocates a new segment and allocates it to 'next', if its the tail,
-// otherwise delegates that task to next element recursively.
+// allocates a new segment and assignes it to the 'next' field, if this is the
+// tail, otherwise delegates that task to next element.
 func (s *segment) grow() {
 	if s.tail { // try to add new tail element to this segment
-		(*s).tail = false // if this segment is tail, it is not any
-		// longer initialize new tail segment at current position
+		// if this segment was tail before, it is not any longer.
+		(*s).tail = false
+		// initialize new tail segment at current position
 		(*s).next = &segment{s.x, s.y, s.char, true, nil}
 	} else { // if not tail, deligate to next segment
 		(*s.next).grow()
 	}
 }
 
-// takes a closure over termbox SetCell with preset bf & fg color and char as
-// argument and calls it, passing elements current and all it's childs
-// coordinates recursesively.
+// takes a closure over termbox SetCell with preset bf & fg color as argument
+// and calls it, passing elements current and all it's childs coordinates and
+// chars recursesively.
 func (s *segment) render(fn func(x, y int, c rune)) {
 	fn(s.x, s.y, s.char)
-	if s.tail {
-		return
-	} else {
+	if !s.tail {
 		(*s.next).render(fn)
 	}
 }
 
-// returns the direction this element is located relative to the given
+// returns the direction this element is located at, relative to the given
+// position
 func (s segment) RelPos(x, y int) (d dir) {
 	switch {
 	case s.y < y:
@@ -85,30 +81,17 @@ func (s segment) RelPos(x, y int) (d dir) {
 	return d
 }
 
-var segChars = map[struct{ p, n dir }]rune{
-	struct{ p, n dir }{UP, DOWN}:    '┃',
-	struct{ p, n dir }{DOWN, UP}:    '┃',
-	struct{ p, n dir }{LEFT, RIGHT}: '━',
-	struct{ p, n dir }{RIGHT, LEFT}: '━',
-	struct{ p, n dir }{LEFT, UP}:    '┛',
-	struct{ p, n dir }{LEFT, DOWN}:  '┓',
-	struct{ p, n dir }{RIGHT, UP}:   '┗',
-	struct{ p, n dir }{RIGHT, DOWN}: '┏',
-	struct{ p, n dir }{UP, LEFT}:    '┛',
-	struct{ p, n dir }{UP, RIGHT}:   '┗',
-	struct{ p, n dir }{DOWN, LEFT}:  '┓',
-	struct{ p, n dir }{DOWN, RIGHT}: '┏',
-}
-
-// move to passed position and drag all childs along recursively.
+// move to passed position, choose char, based on previous and next elements
+// relative position and drag all childs along recursively.
 func (s *segment) move(x, y int, prev *segment) {
-	// safe elements current position
+	// get previous elements position
 	px, py := prev.x, prev.y
+	// safe elements current position
 	nx, ny := (*s).x, (*s).y
-	// move tail to the passed position
+	// move to new position, passed by caller
 	(*s).x, (*s).y = x, y
-	if s.tail {
-		// get char, based on previous elements direction
+	if s.tail { // if this is the tail element:
+		// get tail char, based on previous elements relative position
 		switch prev.RelPos(x, y) {
 		case UP:
 			(*s).char = ','
@@ -119,15 +102,15 @@ func (s *segment) move(x, y int, prev *segment) {
 		case RIGHT:
 			(*s).char = '~'
 		}
-	} else { // recursively call move for tail elements
+	} else { // if this is an ordinary segment:
 		// allocate anonymous struct to hold two relative positions
-		var relPos struct{ p, n dir }
-		// determin position relative to previous elements position
-		// (passed by caller)
-		relPos.p = s.RelPos(px, py)
-		// determin position relative to next elements position (identical to
-		// old position)
-		relPos.n = s.RelPos(nx, ny)
+		var relPos = struct {
+			p dir
+			n dir
+		}{
+			s.RelPos(px, py),
+			s.RelPos(nx, ny),
+		}
 		// get new char based on relative previous and next positions
 		(*s).char = segChars[relPos]
 		// pass old position as new position for the next element. pass
@@ -136,19 +119,19 @@ func (s *segment) move(x, y int, prev *segment) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // worm is a singly linked list of segments. It's 'head' can predict it's next
 // position, according to current direction of movemen.
 type worm struct {
-	queue [2]*segment
 	*segment
 }
 
 func (w *worm) move(x, y int, d dir) {
 	// safe current position as next elements future position
 	nx, ny := w.segment.x, w.segment.y
-	// move element to new position
+	// move element to new position (passed by caller)
 	(*w.segment).x, (*w.segment).y = x, y
-	// determine char based on current direction
+	// determine head char based on current direction of movement
 	switch d {
 	case UP:
 		(*w.segment).char = '^'
@@ -160,13 +143,15 @@ func (w *worm) move(x, y int, d dir) {
 		(*w.segment).char = '>'
 	}
 
-	if w.tail {
+	if w.tail { // if head also happens to be tail, render headchar and
+		// be done with it
 		return
-	} else {
+	} else { // otherwise pass old position and pointer to self on to the
+		// next segments move method
 		(*w.segment.next).move(nx, ny, w.segment)
 	}
 }
-func (w worm) predict(d dir) (x, y int) {
+func (w worm) predNextPos(d dir) (x, y int) {
 	// get current (old) position
 	ox, oy := w.segment.x, w.segment.y
 	// predict next position regarding current direction and position

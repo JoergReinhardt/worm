@@ -5,16 +5,6 @@ import (
 	"time"
 )
 
-type dir uint8
-
-const (
-	UP   dir = 0
-	DOWN dir = 1 << iota
-	LEFT
-	RIGHT
-	MATCH
-)
-
 ///////////////////////////////////////////////////////
 // nice jucy relocateable cherry as food for our worm
 type cherry struct {
@@ -64,17 +54,6 @@ func newState(sizeFn func() (x, y int), randFn func() (x, y int)) *state {
 	}
 }
 
-// current Game state flag
-//go:generate stringer -type GameStat
-type GameStat uint8
-
-const (
-	INIT GameStat = 0
-	RUN  GameStat = 1 << iota
-	PAUSE
-	GAME_OVER
-)
-
 // the game struct holds all game elements and its current state.
 type Game struct {
 	*state
@@ -106,13 +85,13 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 	if xi < 0 { // wrap left boarder to right
 		xo = w - 1
 	}
-	if xi == w { // wrap right boarder to left
+	if xi >= w { // wrap right boarder to left
 		xo = 0
 	}
 	if yi < 0 { // wrap upper boarder to lower
 		yo = h - 1
 	}
-	if yi == h { //wrap lower boarder to upper
+	if yi >= h { //wrap lower boarder to upper
 		yo = 0
 	}
 	return xo, yo
@@ -121,7 +100,7 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 // does one worm move and all neccessary changes that follow by the new state.
 func (g *Game) play() {
 	// wrap board to continuoum, get final x & y
-	x, y := (*g).wrapBoard((*g.worm).predict(g.state.move))
+	x, y := (*g).wrapBoard((*g.worm).predNextPos(g.state.move))
 	// IF CHERRY GOT PICKED
 	if (*g.cherry).picked(x, y) {
 		// grow worm
