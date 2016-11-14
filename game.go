@@ -20,6 +20,7 @@ const (
 // hence the bool flag for convienience.)
 type segment struct {
 	x, y int
+	char rune
 	tail bool
 	next *segment
 }
@@ -48,20 +49,44 @@ func (s *segment) grow() {
 	if s.tail { // try to add new tail element to this segment
 		(*s).tail = false // if this segment is tail, it is not any
 		// longer initialize new tail segment at current position
-		(*s).next = &segment{s.x, s.y, true, nil}
+		(*s).next = &segment{s.x, s.y, '~', true, nil}
 	} else { // if not tail, deligate to next segment
 		(*s.next).grow()
 	}
 }
 
 // move to passed position and drag all childs along recursively.
-func (s *segment) move(x, y int) {
+func (s *segment) move(x, y int, char rune) {
 	// safe old position
-	ox, oy := (*s).x, (*s).y
+	ox, oy := s.x, s.y
+	oc := s.char
 	// move to new position
 	(*s).x, (*s).y = x, y
 	if !s.tail { // recursively call move for tail elements
-		(*s.next).move(ox, oy)
+		switch oc {
+		case '^', 'v', 'A', 'Y':
+			(*s.next).move(ox, oy, ':')
+		case '<', '>', '(', '[', ')', ']':
+			(*s.next).move(ox, oy, '~')
+		}
+	}
+	switch oc {
+	case '^', 'A':
+		wr(w.x, w.y, 'O')
+	case 'v', 'Y':
+		wr(w.x, w.y, 'o')
+	case 'O':
+		wr(w.x, w.y, 'A')
+	case 'o':
+		wr(w.x, w.y, 'Y')
+	case '>', ')':
+		wr(w.x, w.y, ']')
+	case '<', '(':
+		wr(w.x, w.y, '[')
+	case ']':
+		wr(w.x, w.y, '(')
+	case '[':
+		wr(w.x, w.y, '(')
 	}
 }
 
@@ -82,19 +107,28 @@ func (s *segment) collides(x, y int) bool {
 // takes a closure over termbox SetCell with preset bf & fg color and char as
 // argument and calls it, passing elements current and all it's childs
 // coordinates recursesively.
-func (s *segment) render(fn func(x, y int)) {
-	fn(s.x, s.y)
-	if s.tail {
-		return
-	} else {
-		(*s.next).render(fn)
-	}
+func (s *segment) render(wr func(x, y int, char rune), oc rune) {
 }
 
 // worm is a singly linked list of segments. It's 'head' can predict it's next
 // position, according to current direction of movemen.
 type worm struct {
 	*segment
+}
+
+func (w *worm) render(wr func(x, y int, char rune), d dir) {
+	var char rune
+	switch d {
+	case UP:
+		wr(w.x, w.y, '^')
+	case DOWN:
+		wr(w.x, w.y, 'v')
+	case LEFT:
+		wr(w.x, w.y, '<')
+	case RIGHT:
+		wr(w.x, w.y, '>')
+	}
+
 }
 
 func (w worm) predict(s *state) (x, y int) {
