@@ -83,20 +83,18 @@ func (s segment) RelPos(x, y int) (d dir) {
 
 // move to passed position, choose char, based on previous and next elements
 // relative position and drag all childs along recursively.
-func (s *segment) move(x, y int, prev *segment) {
-	// get previous elements position
-	px, py := prev.x, prev.y
+func (s *segment) move(x, y, px, py int) {
 	// safe elements current position
 	nx, ny := (*s).x, (*s).y
 	// move to new position, passed by caller
 	(*s).x, (*s).y = x, y
 	if s.tail { // if this is the tail element:
 		// get tail char, based on previous elements relative position
-		switch prev.RelPos(x, y) {
+		switch s.RelPos(px, py) {
 		case UP:
-			(*s).char = ','
-		case DOWN:
 			(*s).char = '\''
+		case DOWN:
+			(*s).char = ','
 		case LEFT:
 			(*s).char = '-'
 		case RIGHT:
@@ -115,7 +113,7 @@ func (s *segment) move(x, y int, prev *segment) {
 		(*s).char = segChars[relPos]
 		// pass old position as new position for the next element. pass
 		// self to determin relative position.
-		(*s.next).move(nx, ny, s)
+		(*s.next).move(nx, ny, x, y)
 	}
 }
 
@@ -148,7 +146,7 @@ func (w *worm) move(x, y int, d dir) {
 		return
 	} else { // otherwise pass old position and pointer to self on to the
 		// next segments move method
-		(*w.segment.next).move(nx, ny, w.segment)
+		(*w.segment.next).move(nx, ny, x, y)
 	}
 }
 func (w worm) predNextPos(d dir) (x, y int) {
