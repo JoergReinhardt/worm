@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -31,6 +33,52 @@ const (
 	GAME_OVER
 )
 
+func initScreen() {
+	var msg []string
+	msg = append(msg, "▄▄      ▄▄                             ")
+	msg = append(msg, "██      ██                             ")
+	msg = append(msg, "▀█▄ ██ ▄█▀  ▄████▄    ██▄████  ████▄██▄")
+	msg = append(msg, " ██ ██ ██  ██▀  ▀██   ██▀      ██ ██ ██")
+	msg = append(msg, " ███▀▀███  ██    ██   ██       ██ ██ ██")
+	msg = append(msg, " ███  ███  ▀██▄▄██▀   ██       ██ ██ ██")
+	msg = append(msg, " ▀▀▀  ▀▀▀    ▀▀▀▀     ▀▀       ▀▀ ▀▀ ▀▀")
+	msg = append(msg, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	msg = append(msg, "╻ ╻┏━╸╻  ┏━┓                           ")
+	msg = append(msg, "┣━┫┣╸ ┃  ┣━┛╹                          ")
+	msg = append(msg, "╹ ╹┗━╸┗━╸╹  ╹                          ")
+	msg = append(msg, "                                       ")
+	msg = append(msg, "           h, ← : move left            ")
+	msg = append(msg, "           l, → : move right           ")
+	msg = append(msg, "           j, ↓ : move down            ")
+	msg = append(msg, "           k, ↑ : move up              ")
+	msg = append(msg, "                                       ")
+	msg = append(msg, "              s : start Game           ")
+	msg = append(msg, "              p : pause Game           ")
+	msg = append(msg, "              q : quit  Game           ")
+
+	//var msg = []string{"test"}
+	// get widh and hight of current board
+	w, h := termbox.Size()
+
+	// calculate size of boarders around message
+	tb := (h - len(msg)) / 2 // top boarder
+	lb := (w - 39) / 2       // left boarder
+	// painted, painted, painted… painted black
+
+	termbox.Clear(BLACK, BLACK)
+
+	for y, line := range msg {
+		y, line := y+tb, line
+		strsl := strings.Split(line, "")
+		for x, s := range strsl {
+			x, s := x+lb, s
+			r, _ := utf8.DecodeRuneInString(s)
+			termbox.SetCell(x, y, r, WHITE, BLACK)
+		}
+	}
+	termbox.Flush()
+}
+
 // rendering happens in animation cycle intervalls and gets called by run, once
 // per cycle
 func render(g *Game) {
@@ -53,8 +101,19 @@ func render(g *Game) {
 // speed
 func gameController(g *Game) {
 	// set status to run
-	g.state.stat = RUN
+	// g.state.stat = RUN
 	for {
+		// INIT SCREEN
+		if g.state.stat == INIT {
+			initScreen()
+			for { // wait for game start or quit
+				// check once per render cycle
+				time.Sleep(animationSpeed)
+				if g.state.stat != INIT {
+					break
+				}
+			}
+		}
 		// PAUSE MODE
 		// if p is pressed, toggle game state and hold loop
 		if g.state.stat == PAUSE {
@@ -120,6 +179,12 @@ func run() { // runs the animation and input event cycles
 				g.state.move = LEFT
 			case ev.Key == termbox.KeyArrowRight || ev.Ch == 'l':
 				g.state.move = RIGHT
+			case ev.Ch == 's':
+				// if on init screen, run, when s is pressed,
+				// else ignore
+				if g.state.stat == INIT {
+					(*g.state).stat = RUN
+				}
 			case ev.Ch == 'p':
 				// toggle game state between pause & run
 				if g.state.stat == PAUSE {
@@ -133,6 +198,7 @@ func run() { // runs the animation and input event cycles
 		}
 		// exit, if game got ended by last move
 		if g.state.stat == GAME_OVER {
+			// TODO GAME OVER SCREEN
 			return
 		}
 

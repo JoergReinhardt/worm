@@ -178,6 +178,7 @@ func newWorm(s *state) *worm {
 		segment: &segment{
 			x:    x / 2,
 			y:    y / 2,
+			char: ' ',
 			tail: true,
 			next: nil,
 		},
