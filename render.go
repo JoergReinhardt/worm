@@ -57,6 +57,12 @@ type ring struct {
 }
 
 func (r *ring) stringRow() string { return r.str }
+func (r *ring) stringDig() string {
+	ret := r.prev.prev.str + "\n"
+	ret = ret + r.prev.str + "\n"
+	ret = ret + r.str + "\n"
+	return ret
+}
 func (r *ring) nextRow() {
 	(*r).sector = (*r).next
 }
@@ -74,6 +80,7 @@ func (r *ring) prevDigit() {
 	}
 }
 
+// builds a ring of rows
 func newRing() *ring {
 
 	d := newDigits()
@@ -103,8 +110,7 @@ func newRing() *ring {
 		// let predescessor be the new element
 		pred = s
 	}
-	// ring is holding th e last element now…
-	// so one ring can be forged, to rule them all (muhaha)
+	(*r).prevRow()
 	return r
 }
 
