@@ -56,6 +56,24 @@ type ring struct {
 	*sector
 }
 
+func (r *ring) stringRow() string { return r.str }
+func (r *ring) nextRow() {
+	(*r).sector = (*r).next
+}
+func (r *ring) prevRow() {
+	(*r).sector = (*r).prev
+}
+func (r *ring) nextDigit() {
+	for i := 0; i < 3; i++ {
+		(*r).sector = (*r.sector).next
+	}
+}
+func (r *ring) prevDigit() {
+	for i := 0; i < 3; i++ {
+		(*r).sector = (*r.sector).prev
+	}
+}
+
 func newRing() *ring {
 
 	d := newDigits()
@@ -69,25 +87,19 @@ func newRing() *ring {
 			pos: i,
 			str: d[i],
 		}
-		if i != 0 {
-			// set new sector as next sector for rings previous sector
-			(*r.sector.prev).next = s
-			// set rings previous sector as new sectors previous sector
-			(*s).prev = (*r.sector).prev
-		} else {
+		if i == 0 {
 			// set first sector for later referral
 			fs = s
-		}
-		if i != 29 {
-			// set new element as rings previous, for next iteration
 			(*r).prev = s
 		} else {
-			(*s).next = fs
+			(*r.prev).next = s
+			(*r).prev = s
 		}
 	}
+	(*fs).prev = (*r).sector
+	(*r).next = fs
 	// ring is holding th e last element now…
 	// so one ring can be forged, to rule them all (muhaha)
-	(*r.sector).next = fs
 	return r
 }
 
