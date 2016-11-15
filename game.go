@@ -35,7 +35,6 @@ type state struct {
 	speed      time.Duration
 	eventState GameStat
 	direction  dir
-	points     int
 	size       func() (x, y int)
 	rand       func() (x, y int)
 }
@@ -50,7 +49,6 @@ func newState(sizeFn func() (x, y int), randFn func() (x, y int)) *state {
 		speed:      250 * time.Millisecond,
 		eventState: INIT,
 		direction:  UP,
-		points:     0,
 		size:       sizeFn,
 		rand:       randFn,
 	}
@@ -81,7 +79,10 @@ func NewGame(sizeFn func() (x, y int)) *Game {
 }
 
 // reset game, by replacing it with a new game
-func (g *Game) reset() { *g = *NewGame(g.state.size) }
+func (g *Game) reset() {
+	*g = *NewGame(g.state.size)
+	points = newDigit()
+}
 
 // bend board in third dimension to become a continuous manifold ;)
 func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
@@ -125,10 +126,10 @@ func (g *Game) play() {
 		(*g.worm).grow()
 		// relocate cherry
 		(*g.cherry).pop(g.state.rand())
-		// raise worm speed by 10%
+		// increase worm speed by 10%
 		(*g.state).speed = (g.state.speed / 10) * 9
 		// raise points by one
-		(*g.state).points = g.state.points + 1
+		(*points).increase()
 	}
 	// MOVE ON TO NEXT POSITION
 	(*g.worm).move(x, y, g.state.direction)

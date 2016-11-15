@@ -136,9 +136,9 @@ func (w *worm) move(x, y int, d dir) {
 	case DOWN:
 		(*w.segment).char = 'v'
 	case LEFT:
-		(*w.segment).char = '◀'
+		(*w.segment).char = '<'
 	case RIGHT:
-		(*w.segment).char = '▶'
+		(*w.segment).char = '>'
 	}
 
 	if w.tail { // if head also happens to be tail, render headchar and
