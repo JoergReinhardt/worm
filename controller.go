@@ -6,11 +6,10 @@ import (
 )
 
 const (
-	WHITE termbox.Attribute = termbox.ColorWhite
-	BLUE  termbox.Attribute = termbox.ColorBlue
 	RED   termbox.Attribute = termbox.ColorRed
 	GREEN termbox.Attribute = termbox.ColorGreen
 	BLACK termbox.Attribute = termbox.ColorBlack
+	WHITE termbox.Attribute = termbox.ColorWhite
 )
 
 type dir uint8

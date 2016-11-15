@@ -171,7 +171,7 @@ func initScreen() {
 	lb := (w - 39) / 2       // left boarder
 	// painted, painted, painted… painted black
 
-	termbox.Clear(BLACK, BLACK)
+	termbox.Clear(0, 0)
 
 	for y, line := range msg {
 		y, line := y+tb, line
@@ -179,9 +179,10 @@ func initScreen() {
 		for x, s := range strsl {
 			x, s := x+lb, s
 			r, _ := utf8.DecodeRuneInString(s)
-			termbox.SetCell(x, y, r, WHITE, BLACK)
+			termbox.SetCell(x, y, r, WHITE, 0)
 		}
 	}
+	// FLUSH
 	termbox.Flush()
 }
 
@@ -189,23 +190,23 @@ func initScreen() {
 // per cycle
 func render(g *Game) {
 	// painted, painted, painted… painted black
-	termbox.Clear(BLACK, BLACK)
+	termbox.Clear(0, 0)
 
 	// COUNTER
 	counter(g.state.points)
 
 	// CHERRY
-	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, BLACK)
+	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, 0)
 
 	// WORM
 	// callback closes over SetCell with proper bg & fg, gets x &y by worms
 	// render method.
 	var fn = func(x, y int, c rune) {
-		termbox.SetCell(x, y, c, GREEN, BLACK)
+		termbox.SetCell(x, y, c, GREEN, 0)
 	}
 	// renders through callback
 	(*g.worm).render(fn)
-
 	// FLUSH
 	termbox.Flush()
+
 }

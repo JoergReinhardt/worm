@@ -9,6 +9,7 @@ const animationSpeed = 10 * time.Millisecond
 
 func main() {
 	err := termbox.Init()
+	//_ = termbox.Output256
 	if err != nil {
 		panic(err)
 	}

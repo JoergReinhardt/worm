@@ -92,13 +92,13 @@ func (s *segment) move(x, y, px, py int) {
 		// get tail char, based on previous elements relative position
 		switch s.RelPos(px, py) {
 		case UP:
-			(*s).char = '\''
+			(*s).char = '┆'
 		case DOWN:
-			(*s).char = ','
+			(*s).char = '┆'
 		case LEFT:
-			(*s).char = '-'
+			(*s).char = '┄'
 		case RIGHT:
-			(*s).char = '~'
+			(*s).char = '┄'
 		}
 	} else { // if this is an ordinary segment:
 		// allocate anonymous struct to hold two relative positions
@@ -136,9 +136,9 @@ func (w *worm) move(x, y int, d dir) {
 	case DOWN:
 		(*w.segment).char = 'v'
 	case LEFT:
-		(*w.segment).char = '<'
+		(*w.segment).char = '◀'
 	case RIGHT:
-		(*w.segment).char = '>'
+		(*w.segment).char = '▶'
 	}
 
 	if w.tail { // if head also happens to be tail, render headchar and
