@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/nsf/termbox-go"
 	"strings"
-	//"time"
+	"time"
 	"unicode/utf8"
 )
 
@@ -71,18 +71,29 @@ func (r *ring) prevRow() {
 }
 func (r *ring) nextDigit() {
 	for i := 0; i < 3; i++ {
-		(*r).sector = (*r.sector).next
+		(*r).nextRow()
 	}
 }
 func (r *ring) prevDigit() {
 	for i := 0; i < 3; i++ {
-		(*r).sector = (*r.sector).prev
+		(*r).prevRow()
+	}
+}
+func (r *ring) nextDigitAnimated() {
+	for i := 0; i < 3; i++ {
+		(*r).nextRow()
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+func (r *ring) prevDigitAnimated() {
+	for i := 0; i < 3; i++ {
+		(*r).prevRow()
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 // builds a ring of rows
 func newRing() *ring {
-
 	d := newDigits()
 	r := &ring{&sector{
 		pos: 0,
@@ -110,7 +121,13 @@ func newRing() *ring {
 		// let predescessor be the new element
 		pred = s
 	}
+	// center ring on first element
 	(*r).prevRow()
+
+	// buffered de-/increase runs in the background, so that inc and dec
+	// calls don't block (until the buffer is full) and
+	// next/prevDigitAnimated calls run sequentially
+
 	return r
 }
 
