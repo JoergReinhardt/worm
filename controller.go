@@ -2,9 +2,7 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
-	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 const (
@@ -33,70 +31,6 @@ const (
 	GAME_OVER
 )
 
-func initScreen() {
-	var msg []string
-	msg = append(msg, "▄▄      ▄▄                             ")
-	msg = append(msg, "██      ██                             ")
-	msg = append(msg, "▀█▄ ██ ▄█▀  ▄████▄    ██▄████  ████▄██▄")
-	msg = append(msg, " ██ ██ ██  ██▀  ▀██   ██▀      ██ ██ ██")
-	msg = append(msg, " ███▀▀███  ██    ██   ██       ██ ██ ██")
-	msg = append(msg, " ███  ███  ▀██▄▄██▀   ██       ██ ██ ██")
-	msg = append(msg, " ▀▀▀  ▀▀▀    ▀▀▀▀     ▀▀       ▀▀ ▀▀ ▀▀")
-	msg = append(msg, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	msg = append(msg, "╻ ╻┏━╸╻  ┏━┓                           ")
-	msg = append(msg, "┣━┫┣╸ ┃  ┣━┛╹                          ")
-	msg = append(msg, "╹ ╹┗━╸┗━╸╹  ╹                          ")
-	msg = append(msg, "                                       ")
-	msg = append(msg, "           h, ← : move left            ")
-	msg = append(msg, "           l, → : move right           ")
-	msg = append(msg, "           j, ↓ : move down            ")
-	msg = append(msg, "           k, ↑ : move up              ")
-	msg = append(msg, "                                       ")
-	msg = append(msg, "              s : start Game           ")
-	msg = append(msg, "              p : pause Game           ")
-	msg = append(msg, "              q : quit  Game           ")
-
-	//var msg = []string{"test"}
-	// get widh and hight of current board
-	w, h := termbox.Size()
-
-	// calculate size of boarders around message
-	tb := (h - len(msg)) / 2 // top boarder
-	lb := (w - 39) / 2       // left boarder
-	// painted, painted, painted… painted black
-
-	termbox.Clear(BLACK, BLACK)
-
-	for y, line := range msg {
-		y, line := y+tb, line
-		strsl := strings.Split(line, "")
-		for x, s := range strsl {
-			x, s := x+lb, s
-			r, _ := utf8.DecodeRuneInString(s)
-			termbox.SetCell(x, y, r, WHITE, BLACK)
-		}
-	}
-	termbox.Flush()
-}
-
-// rendering happens in animation cycle intervalls and gets called by run, once
-// per cycle
-func render(g *Game) {
-	// painted, painted, painted… painted black
-	termbox.Clear(BLACK, BLACK)
-	// render cherry
-	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, BLACK)
-
-	// callback closes over SetCell with proper bg & fg, gets x &y by worms
-	// render method.
-	var fn = func(x, y int, c rune) {
-		termbox.SetCell(x, y, c, GREEN, BLACK)
-	}
-	// renders through callback
-	(*g.worm).render(fn)
-	termbox.Flush()
-}
-
 // the gameController runs worm and cherry at the rate required by current worm
 // speed
 func gameController(g *Game) {
@@ -104,23 +38,24 @@ func gameController(g *Game) {
 	// g.state.stat = RUN
 	for {
 		// INIT SCREEN
-		if g.state.stat == INIT {
-			initScreen()
+		if g.state.eventState == INIT {
 			for { // wait for game start or quit
+				initScreen()
 				// check once per render cycle
 				time.Sleep(animationSpeed)
-				if g.state.stat != INIT {
+				if g.state.eventState != INIT {
 					break
 				}
 			}
 		}
 		// PAUSE MODE
 		// if p is pressed, toggle game state and hold loop
-		if g.state.stat == PAUSE {
+		if g.state.eventState == PAUSE {
 			for {
+				initScreen()
 				// check once per render cycle
 				time.Sleep(animationSpeed)
-				if g.state.stat != PAUSE {
+				if g.state.eventState != PAUSE {
 					break
 				}
 			}
@@ -172,34 +107,34 @@ func run() { // runs the animation and input event cycles
 			switch {
 			// set direction for the next move
 			case ev.Key == termbox.KeyArrowUp || ev.Ch == 'k':
-				g.state.move = UP
+				g.state.direction = UP
 			case ev.Key == termbox.KeyArrowDown || ev.Ch == 'j':
-				g.state.move = DOWN
+				g.state.direction = DOWN
 			case ev.Key == termbox.KeyArrowLeft || ev.Ch == 'h':
-				g.state.move = LEFT
+				g.state.direction = LEFT
 			case ev.Key == termbox.KeyArrowRight || ev.Ch == 'l':
-				g.state.move = RIGHT
+				g.state.direction = RIGHT
 			case ev.Ch == 's':
 				// if on init screen, run, when s is pressed,
 				// else ignore
-				if g.state.stat == INIT {
-					(*g.state).stat = RUN
+				if g.state.eventState == INIT {
+					(*g.state).eventState = RUN
 				}
 			case ev.Ch == 'p':
 				// toggle game state between pause & run
-				if g.state.stat == PAUSE {
-					(*g.state).stat = RUN
+				if g.state.eventState == PAUSE {
+					(*g.state).eventState = RUN
 				} else {
-					(*g.state).stat = PAUSE
+					(*g.state).eventState = PAUSE
 				}
 			case ev.Key == termbox.KeyEsc || ev.Ch == 'q':
 				return
 			}
 		}
 		// exit, if game got ended by last move
-		if g.state.stat == GAME_OVER {
-			// TODO GAME OVER SCREEN
-			return
+		if g.state.eventState == GAME_OVER {
+			(*g).reset()
+			(*g.state).eventState = INIT
 		}
 
 		// render current game state

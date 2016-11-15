@@ -32,11 +32,12 @@ func (c *cherry) pop(x, y int) {
 // gets passed araound to cooperate with controller and render functions on
 // progressing the game state.
 type state struct {
-	speed time.Duration
-	stat  GameStat
-	move  dir
-	size  func() (x, y int)
-	rand  func() (x, y int)
+	speed      time.Duration
+	eventState GameStat
+	direction  dir
+	points     int
+	size       func() (x, y int)
+	rand       func() (x, y int)
 }
 
 // newState()
@@ -46,11 +47,12 @@ type state struct {
 // the cherry, if it got picked.
 func newState(sizeFn func() (x, y int), randFn func() (x, y int)) *state {
 	return &state{
-		250 * time.Millisecond,
-		INIT,
-		UP,
-		sizeFn,
-		randFn,
+		speed:      250 * time.Millisecond,
+		eventState: INIT,
+		direction:  UP,
+		points:     0,
+		size:       sizeFn,
+		rand:       randFn,
 	}
 }
 
@@ -78,6 +80,9 @@ func NewGame(sizeFn func() (x, y int)) *Game {
 	return &Game{s, &cherry{x, y}, newWorm(s)}
 }
 
+// reset game, by replacing it with a new game
+func (g *Game) reset() { *g = *NewGame(g.state.size) }
+
 // bend board in third dimension to become a continuous manifold ;)
 func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 	xo, yo = xi, yi
@@ -102,11 +107,11 @@ func (g *Game) play() {
 
 	// wrap board to continuoum, get worms final x & y regarding the
 	// current board size
-	x, y := (*g).wrapBoard((*g.worm).predNextPos(g.state.move))
+	x, y := (*g).wrapBoard((*g.worm).predNextPos(g.state.direction))
 
 	// IF SELF-COLLDISION → GAME OVER
 	if (*g.worm).collides(x, y) {
-		(*g.state).stat = GAME_OVER
+		(*g.state).eventState = GAME_OVER
 		return
 	}
 
@@ -122,7 +127,9 @@ func (g *Game) play() {
 		(*g.cherry).pop(g.state.rand())
 		// raise worm speed by 10%
 		(*g.state).speed = (g.state.speed / 10) * 9
+		// raise points by one
+		(*g.state).points = g.state.points + 1
 	}
 	// MOVE ON TO NEXT POSITION
-	(*g.worm).move(x, y, g.state.move)
+	(*g.worm).move(x, y, g.state.direction)
 }
