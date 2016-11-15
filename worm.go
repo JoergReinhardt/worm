@@ -37,9 +37,8 @@ func (s *segment) collides(x, y int) bool {
 	}
 	if s.tail { // otherwise, return no collision
 		return false
-	} else { // when not tail, check for tail collision
-		return s.next.collides(x, y)
 	}
+	return s.next.collides(x, y)
 }
 
 // allocates a new segment and assignes it to the 'next' field, if this is the
@@ -144,10 +143,9 @@ func (w *worm) move(x, y int, d dir) {
 	if w.tail { // if head also happens to be tail, render headchar and
 		// be done with it
 		return
-	} else { // otherwise pass old position and pointer to self on to the
-		// next segments move method
-		(*w.segment.next).move(nx, ny, x, y)
-	}
+	} // otherwise pass old position and pointer to self on to the
+	// next segments move method
+	(*w.segment.next).move(nx, ny, x, y)
 }
 func (w worm) predNextPos(d dir) (x, y int) {
 	// get current (old) position

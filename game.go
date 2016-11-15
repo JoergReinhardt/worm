@@ -17,9 +17,8 @@ type cherry struct {
 func (c cherry) picked(x, y int) bool {
 	if c.x == x && c.y == y {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 // pops cherry at a new location
@@ -33,7 +32,7 @@ func (c *cherry) pop(x, y int) {
 // progressing the game state.
 type state struct {
 	speed      time.Duration
-	eventState GameStat
+	eventState gameStat
 	direction  dir
 	size       func() (x, y int)
 	rand       func() (x, y int)
@@ -54,15 +53,15 @@ func newState(sizeFn func() (x, y int), randFn func() (x, y int)) *state {
 	}
 }
 
-// the game struct holds all game elements and its current state.
-type Game struct {
+// Game the game struct holds all game elements and its current state.
+type game struct {
 	*state
 	*cherry
 	*worm
 }
 
 // allocate a new game
-func NewGame(sizeFn func() (x, y int)) *Game {
+func newGame(sizeFn func() (x, y int)) *game {
 	// initialize random number generation
 	rand.Seed(time.Now().Unix())
 	// build a closure to generate random x & y, within the range of width
@@ -75,17 +74,17 @@ func NewGame(sizeFn func() (x, y int)) *Game {
 	x, y := randFn()              // initial cherry position
 	s := newState(sizeFn, randFn) // allocate new state
 	// return game with all its components
-	return &Game{s, &cherry{x, y}, newWorm(s)}
+	return &game{s, &cherry{x, y}, newWorm(s)}
 }
 
 // reset game, by replacing it with a new game
-func (g *Game) reset() {
-	*g = *NewGame(g.state.size)
+func (g *game) reset() {
+	*g = *newGame(g.state.size)
 	points = newDigit()
 }
 
 // bend board in third dimension to become a continuous manifold ;)
-func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
+func (g *game) wrapBoard(xi, yi int) (xo, yo int) {
 	xo, yo = xi, yi
 	w, h := g.state.size()
 	if xi < 0 { // wrap left boarder to right
@@ -104,7 +103,7 @@ func (g *Game) wrapBoard(xi, yi int) (xo, yo int) {
 }
 
 // does one worm move and all neccessary changes that follow by the new state.
-func (g *Game) play() {
+func (g *game) play() {
 
 	// wrap board to continuoum, get worms final x & y regarding the
 	// current board size

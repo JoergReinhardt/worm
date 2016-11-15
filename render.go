@@ -60,7 +60,7 @@ func initScreen() {
 var points = newDigit()
 
 func counter() {
-	var msg []string = points.stringRows()
+	var msg = points.stringRows()
 
 	//var msg = []string{"test"}
 	// get widh and hight of current board
@@ -88,7 +88,7 @@ func counter() {
 
 // rendering happens in animation cycle intervalls and gets called by run, once
 // per cycle
-func render(g *Game) {
+func render(g *game) {
 	// painted, painted, painted… painted black
 	termbox.Clear(0, 0)
 

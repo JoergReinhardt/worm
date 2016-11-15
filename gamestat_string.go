@@ -18,7 +18,7 @@ var (
 	_GameStat_index_3 = [...]uint8{0, 9}
 )
 
-func (i GameStat) String() string {
+func (i gameStat) String() string {
 	switch {
 	case i == 0:
 		return _GameStat_name_0

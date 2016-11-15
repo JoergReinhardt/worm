@@ -21,18 +21,18 @@ const (
 	RIGHT
 )
 
-type GameStat uint8
+type gameStat uint8
 
 const (
-	INIT GameStat = 0
-	RUN  GameStat = 1 << iota
+	INIT gameStat = 0
+	RUN  gameStat = 1 << iota
 	PAUSE
 	GAME_OVER
 )
 
 // the gameController runs worm and cherry at the rate required by current worm
 // speed
-func gameController(g *Game) {
+func gameController(g *game) {
 	// set status to run
 	// g.state.stat = RUN
 	for {
@@ -82,7 +82,7 @@ func run() { // runs the animation and input event cycles
 	//////////////////////////////////////////////////////////////////////////////////////
 	/// GAME SETUP
 	// Allocate new game, pass termbox size as functional argument
-	g := NewGame(termbox.Size)
+	g := newGame(termbox.Size)
 	// game loop progresses the game in the background
 	go gameController(g)
 
