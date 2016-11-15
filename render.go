@@ -77,27 +77,32 @@ func (r *ring) prevDigit() {
 func newRing() *ring {
 
 	d := newDigits()
-	r := &ring{&sector{}}
-	fs := &sector{}
+	r := &ring{&sector{
+		pos: 0,
+		str: d[0],
+	}}
+	pred := r.sector
 
-	for i := 0; i < 30; i++ {
+	for i := 1; i < 30; i++ {
 		i := i
 		// allocate new sector
 		s := &sector{
 			pos: i,
 			str: d[i],
+			// set predescessor as previous segment
+			prev: pred,
 		}
-		if i == 0 {
-			// set first sector for later referral
-			fs = s
-			(*r).prev = s
-		} else {
-			(*r.prev).next = s
-			(*r).prev = s
+		// set predescessors next to point to new element
+		(*pred).next = s
+
+		if i == 29 {
+			(*s).next = (*r).sector
+			(*r.sector).prev = s
 		}
+
+		// let predescessor be the new element
+		pred = s
 	}
-	(*fs).prev = (*r).sector
-	(*r).next = fs
 	// ring is holding th e last element now…
 	// so one ring can be forged, to rule them all (muhaha)
 	return r
