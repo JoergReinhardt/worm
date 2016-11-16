@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/nsf/termbox-go"
@@ -84,6 +85,53 @@ func counter() {
 	}
 	// FLUSH
 	termbox.Flush()
+}
+
+// the gameController runs worm and cherry at the rate required by current worm
+// speed
+func gameController(g *game) {
+	// set status to run
+	// g.state.stat = RUN
+	for {
+		// INIT SCREEN
+		if g.state.eventState == INIT {
+			for { // wait for game start or quit
+				initScreen()
+				// check once per render cycle
+				time.Sleep(animationSpeed)
+				if g.state.eventState != INIT {
+					break
+				}
+			}
+		}
+		// PAUSE MODE
+		// if p is pressed, toggle game state and hold loop
+		if g.state.eventState == PAUSE {
+			for {
+				initScreen()
+				// check once per render cycle
+				time.Sleep(animationSpeed)
+				if g.state.eventState != PAUSE {
+					break
+				}
+			}
+		}
+		// PLAY
+		//- detects colissions for next step
+		//- ends the game on colission of worm with itself (sets
+		//  state.stat to GAME_OVER)
+		//- grows the worm and raises its speed on colission
+		//  with cherry.
+		//- moves the worm one step
+		g.move()
+		//- accesses game state to read cherry position
+		//- use termbox SetCell, to render cherry
+		//- pass termbox SetCell to worms render method.
+		render(g)
+		// wait one worm speed duration cycle until next move (event
+		// queue is running parallel meanwhile changing the game state.
+		time.Sleep(g.state.speed)
+	}
 }
 
 // rendering happens in animation cycle intervalls and gets called by run, once
