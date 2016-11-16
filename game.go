@@ -128,7 +128,6 @@ func (g *game) play() {
 		// increase worm speed by 10%
 		(*g.state).speed = (g.state.speed / 10) * 9
 		// raise points by one
-		(*points).increase()
 	}
 	// MOVE ON TO NEXT POSITION
 	(*g.worm).move(x, y, g.state.direction)

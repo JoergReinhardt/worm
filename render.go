@@ -60,33 +60,6 @@ func initScreen() {
 
 var points = newDigit()
 
-func counter() {
-	var msg = points.stringRows()
-
-	//var msg = []string{"test"}
-	// get widh and hight of current board
-	w, _ := termbox.Size()
-
-	// calculate size of boarders around message
-	tb := 2                   // top boarder
-	lb := w - len(msg[0]) + 2 // left boarder
-	// painted, painted, painted… painted black
-
-	termbox.Clear(0, 0)
-
-	for y, line := range msg {
-		y, line := y+tb, line
-		strsl := strings.Split(line, "")
-		for x, s := range strsl {
-			x, s := x+lb, s
-			r, _ := utf8.DecodeRuneInString(s)
-			termbox.SetCell(x, y, r, WHITE, 0)
-		}
-	}
-	// FLUSH
-	termbox.Flush()
-}
-
 // the gameController runs worm and cherry at the rate required by current worm
 // speed
 func gameController(g *game) {
@@ -123,7 +96,7 @@ func gameController(g *game) {
 		//- grows the worm and raises its speed on colission
 		//  with cherry.
 		//- moves the worm one step
-		g.move()
+		g.play()
 		//- accesses game state to read cherry position
 		//- use termbox SetCell, to render cherry
 		//- pass termbox SetCell to worms render method.
@@ -141,7 +114,6 @@ func render(g *game) {
 	termbox.Clear(0, 0)
 
 	// COUNTER
-	counter()
 
 	// CHERRY
 	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, 0)
