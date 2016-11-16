@@ -80,13 +80,13 @@ func (r *ring) decDigit() {
 func (r *ring) nextDigitDelayed() {
 	for i := 0; i < 3; i++ {
 		(*r).advanceRow()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 func (r *ring) prevDigitDelayed() {
 	for i := 0; i < 3; i++ {
 		(*r).backupRow()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
@@ -185,7 +185,22 @@ func (d *digit) increase() {
 func (d *digit) decrease() {
 	(*d).decDigit()
 	if (*d).pos >= 26 { // underflow
-		(*d.next).decDigit()
+		(*d).next.decDigit()
+	}
+}
+func (d *digit) incAnim() {
+	(*d).incDigit()
+	if (*d).pos <= 2 { // overflow
+		if !(*d).hasNext {
+			(*d).addDigit()
+		}
+		(*d).next.nextDigitDelayed()
+	}
+}
+func (d *digit) decAnim() {
+	(*d).decDigit()
+	if (*d).pos >= 26 { // underflow
+		(*d.next).prevDigitDelayed()
 	}
 }
 func newDigit() *digit {
