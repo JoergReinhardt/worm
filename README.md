@@ -2,6 +2,8 @@
 
 Worm is a version of the classic 'snake' game, written in go.
 
+![instruction screen](/screenshots/3.png)
+
 ## Features
 
 * uses UTF-8 chars to make things nicer (caveat: needs a terminal and font, appropriately supporting it)
@@ -10,8 +12,6 @@ Worm is a version of the classic 'snake' game, written in go.
 * comes with animated rolling counter, as nostalgic reminder on, how software used to be distributed back in the days (go look it up kids!)
 * instruction screen
 * pause mode
-
-![instruction screen](/screenshots/3.png)
 
 ![rolling counter](/screenshots/1.png)
 
