@@ -192,7 +192,6 @@ func newCounter() *counter {
 			case i := <-(*c).trig:
 				if i > 1 {
 					for j := 0; j < i; j++ {
-						fmt.Printf("trig %d ", i)
 						(*c).trig <- 1
 					}
 				}
