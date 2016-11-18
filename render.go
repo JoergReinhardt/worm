@@ -109,7 +109,7 @@ func gameController(g *game) {
 		//- accesses game state to read cherry position
 		//- use termbox SetCell, to render cherry
 		//- pass termbox SetCell to worms render method.
-		render(g)
+		(*g).render()
 		// wait one worm speed duration cycle until next move (event
 		// queue is running parallel meanwhile changing the game state.
 		time.Sleep(g.state.speed)
@@ -118,7 +118,7 @@ func gameController(g *game) {
 
 // rendering happens in animation cycle intervalls and gets called by run, once
 // per cycle
-func render(g *game) {
+func (g *game) render() {
 	// painted, painted, painted… painted black
 	termbox.Clear(0, 0)
 	// COUNTER

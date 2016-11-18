@@ -90,7 +90,7 @@ func run() { // runs the animation and input event cycles
 			(*g.state).eventState = INIT
 
 		}
-		render(g)
+		(*g).render()
 
 		// sleep til next animation cycle
 		time.Sleep(animationSpeed)
