@@ -1,11 +1,10 @@
 package main
 
 import (
+	"github.com/nsf/termbox-go"
 	"strings"
 	"time"
 	"unicode/utf8"
-
-	"github.com/nsf/termbox-go"
 )
 
 func initScreen() {
@@ -81,7 +80,7 @@ func gameController(g *game) {
 		// if p is pressed, toggle game state and hold loop
 		if g.state.eventState == PAUSE {
 			for {
-				initScreen()
+				//initScreen()
 				// check once per render cycle
 				time.Sleep(animationSpeed)
 				if g.state.eventState != PAUSE {
@@ -113,8 +112,6 @@ func render(g *game) {
 	// painted, painted, painted… painted black
 	termbox.Clear(0, 0)
 
-	// COUNTER
-
 	// CHERRY
 	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, 0)
 
@@ -126,6 +123,12 @@ func render(g *game) {
 	}
 	// renders through callback
 	(*g.worm).render(fn)
+	// COUNTER
+	fn = func(x, y int, c rune) {
+		termbox.SetCell(x, y, c, WHITE, 0)
+	}
+	(*g.counter).render(fn)
+
 	// FLUSH
 	termbox.Flush()
 

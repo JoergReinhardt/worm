@@ -58,6 +58,7 @@ type game struct {
 	*state
 	*cherry
 	*worm
+	*counter
 }
 
 // allocate a new game
@@ -74,7 +75,7 @@ func newGame(sizeFn func() (x, y int)) *game {
 	x, y := randFn()              // initial cherry position
 	s := newState(sizeFn, randFn) // allocate new state
 	// return game with all its components
-	return &game{s, &cherry{x, y}, newWorm(s)}
+	return &game{s, &cherry{x, y}, newWorm(s), newCounter()}
 }
 
 // reset game, by replacing it with a new game
@@ -128,6 +129,7 @@ func (g *game) play() {
 		// increase worm speed by 10%
 		(*g.state).speed = (g.state.speed / 10) * 9
 		// raise points by one
+		(*g.counter).inc(1)
 	}
 	// MOVE ON TO NEXT POSITION
 	(*g.worm).move(x, y, g.state.direction)
