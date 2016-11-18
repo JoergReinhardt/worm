@@ -11,6 +11,6 @@ Worm is a version of the classic 'snake' game, written in go.
 * instruction screen
 * pause mode
 
-![rolling counter](https://github.com/JoergReinhardt/worm/screenshots/1.png)
-![wrapped board](https://github.com/JoergReinhardt/worm/screenshots/2.png)
-![instruction screen](https://github.com/JoergReinhardt/worm/screenshots/3.png)
+![rolling counter](https://github.com/JoergReinhardt/worm/screenshots/1.jpg)
+![wrapped board](https://github.com/JoergReinhardt/worm/screenshots/2.jpg)
+![instruction screen](https://github.com/JoergReinhardt/worm/screenshots/3.jpg)
