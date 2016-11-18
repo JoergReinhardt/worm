@@ -26,6 +26,10 @@ func (c *cherry) pop(x, y int) {
 	(*c).x, (*c).y = x, y
 }
 
+func (c *cherry) render(fn func(x, y int, r rune)) {
+	fn(c.x, c.y, '☻')
+}
+
 ///////////////////////////////////////////////////////
 /// STATE
 // gets passed araound to cooperate with controller and render functions on

@@ -1,7 +1,18 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
+func TestCounterString(t *testing.T) {
+	cnt := newCounter()
+	(*cnt).inc(5)
+
+	time.Sleep(5 * time.Second)
+
+	t.Log(cnt.String())
+}
 func TestProgressDegress(t *testing.T) {
 	d := newDigit()
 	for i := 0; i < 20; i++ {

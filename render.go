@@ -7,7 +7,36 @@ import (
 	"unicode/utf8"
 )
 
-func initScreen() {
+type view func() []string
+
+func (v view) render(fn func(x, y int, r rune)) {
+	msg := v()
+	//var msg = []string{"test"}
+	// get widh and hight of current board
+	w, h := termbox.Size()
+
+	// calculate size of boarders around message
+	tb := (h - len(msg)) / 2 // top boarder
+	lb := (w - 39) / 2       // left boarder
+	// painted, painted, painted… painted black
+
+	//termbox.Clear(0, 0)
+
+	termbox.Clear(0, 0)
+	for y, line := range msg {
+		y, line := y+tb, line
+		strsl := strings.Split(line, "")
+		for x, s := range strsl {
+			x, s := x+lb, s
+			r, _ := utf8.DecodeRuneInString(s)
+			termbox.SetCell(x, y, r, WHITE, 0)
+		}
+	}
+	// FLUSH
+	termbox.Flush()
+}
+
+var initScreen view = func() []string {
 	var msg []string
 	msg = append(msg, "▄▄      ▄▄                             ")
 	msg = append(msg, "██      ██                             ")
@@ -32,29 +61,7 @@ func initScreen() {
 	msg = append(msg, "                                       ")
 	msg = append(msg, "      Feel free to resize screen       ")
 	msg = append(msg, "      while playing…                   ")
-
-	//var msg = []string{"test"}
-	// get widh and hight of current board
-	w, h := termbox.Size()
-
-	// calculate size of boarders around message
-	tb := (h - len(msg)) / 2 // top boarder
-	lb := (w - 39) / 2       // left boarder
-	// painted, painted, painted… painted black
-
-	termbox.Clear(0, 0)
-
-	for y, line := range msg {
-		y, line := y+tb, line
-		strsl := strings.Split(line, "")
-		for x, s := range strsl {
-			x, s := x+lb, s
-			r, _ := utf8.DecodeRuneInString(s)
-			termbox.SetCell(x, y, r, WHITE, 0)
-		}
-	}
-	// FLUSH
-	termbox.Flush()
+	return msg
 }
 
 var points = newDigit()
@@ -68,7 +75,10 @@ func gameController(g *game) {
 		// INIT SCREEN
 		if g.state.eventState == INIT {
 			for { // wait for game start or quit
-				initScreen()
+				var fn = func(x, y int, c rune) {
+					termbox.SetCell(x, y, c, WHITE, 0)
+				}
+				initScreen.render(fn)
 				// check once per render cycle
 				time.Sleep(animationSpeed)
 				if g.state.eventState != INIT {
@@ -111,25 +121,28 @@ func gameController(g *game) {
 func render(g *game) {
 	// painted, painted, painted… painted black
 	termbox.Clear(0, 0)
+	// COUNTER
+	fn := func(x, y int, r rune) {
+		termbox.SetCell(x, y, r, WHITE, 0)
+	}
+	(*g.counter).render(fn)
+	termbox.Flush()
 
 	// CHERRY
-	termbox.SetCell((*g.cherry).x, (*g.cherry).y, 'O', RED, 0)
+	fn = func(x, y int, r rune) {
+		termbox.SetCell(x, y, r, RED, 0)
+	}
+	(*g.cherry).render(fn)
+	termbox.Flush()
 
 	// WORM
 	// callback closes over SetCell with proper bg & fg, gets x &y by worms
 	// render method.
-	var fn = func(x, y int, c rune) {
-		termbox.SetCell(x, y, c, GREEN, 0)
+	fn = func(x, y int, r rune) {
+		termbox.SetCell(x, y, r, GREEN, 0)
 	}
 	// renders through callback
 	(*g.worm).render(fn)
-	// COUNTER
-	fn = func(x, y int, c rune) {
-		termbox.SetCell(x, y, c, WHITE, 0)
-	}
-	(*g.counter).render(fn)
-
-	// FLUSH
 	termbox.Flush()
 
 }
