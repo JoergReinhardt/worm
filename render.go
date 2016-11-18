@@ -126,14 +126,12 @@ func render(g *game) {
 		termbox.SetCell(x, y, r, WHITE, 0)
 	}
 	(*g.counter).render(fn)
-	termbox.Flush()
 
 	// CHERRY
 	fn = func(x, y int, r rune) {
 		termbox.SetCell(x, y, r, RED, 0)
 	}
 	(*g.cherry).render(fn)
-	termbox.Flush()
 
 	// WORM
 	// callback closes over SetCell with proper bg & fg, gets x &y by worms

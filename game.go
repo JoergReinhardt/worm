@@ -27,7 +27,7 @@ func (c *cherry) pop(x, y int) {
 }
 
 func (c *cherry) render(fn func(x, y int, r rune)) {
-	fn(c.x, c.y, '☻')
+	fn(c.x, c.y, 'σ')
 }
 
 ///////////////////////////////////////////////////////

@@ -43,7 +43,7 @@ var digRows = []string{
 	"┗━┛",
 }
 
-var delay = time.Millisecond * 500
+var delay = time.Millisecond * 200
 
 type buf struct {
 	*sync.RWMutex
@@ -73,7 +73,7 @@ func (d *digit) render(fn func(x, y int, c rune)) {
 	w, _ := termbox.Size()
 	// calculate size of boarders around message
 	msg := strings.Split((*d).String(), "\n")
-	lb := (w - len(msg[0])) // left boarder
+	lb := (w - 12) // left boarder
 	for y, line := range msg {
 		y, line := y, line
 		strsl := strings.Split(line, "")
@@ -83,8 +83,6 @@ func (d *digit) render(fn func(x, y int, c rune)) {
 			termbox.SetCell(x, y, r, WHITE, 0)
 		}
 	}
-	// FLUSH
-	termbox.Flush()
 }
 func (d *digit) progress() {
 	if d.abs == 9 {
@@ -102,30 +100,26 @@ func (d *digit) progress() {
 	(*d.buf).b[2] = digRows[d.abs*3+2]
 }
 func (d *digit) progDelayed() {
-	if d.abs == 9 {
+	if d.abs+1 > 9 {
 		(*d).abs = 0
 		if !d.ofl {
 			(*d).next = newDigit()
 			(*d).ofl = true
 		}
+		(*d).backupRows()
 		(*d).next.progDelayed()
 	} else {
+		(*d).advanceRows()
 		(*d).abs = d.abs + 1
 	}
-	var idx = func(abs, idx, rcn int) int {
-		// wrap over and underflow
-		i := 3 * abs
-		if i != 0 {
-			i = i % 30
-		}
-		return i + rcn
-	}
+}
+func (d *digit) advanceRows() {
 	for i := 0; i < 3; i++ {
 		i := i
 		(*d.buf).Lock()
-		(*d.buf).b[0] = digRows[idx(d.abs, i, 0)]
-		(*d.buf).b[1] = digRows[idx(d.abs, i, 1)]
-		(*d.buf).b[2] = digRows[idx(d.abs, i, 2)]
+		(*d.buf).b[0] = digRows[d.abs*3+i+1]
+		(*d.buf).b[1] = digRows[d.abs*3+i+2]
+		(*d.buf).b[2] = digRows[d.abs*3+i+3]
 		(*d.buf).Unlock()
 		time.Sleep(delay)
 	}
@@ -144,33 +138,28 @@ func (d *digit) regress() {
 	(*d.buf).b[2] = digRows[d.abs*3+2]
 }
 func (d *digit) regrDelayed() {
-	if d.abs == 0 {
+	if d.abs-1 < 0 {
 		(*d).abs = 9
+		(*d).backupRows()
 		if d.ofl {
 			(*d).next.regress()
 		}
 	} else {
 		(*d).abs = d.abs - 1
+		(*d).backupRows()
 	}
-	var idx = func(abs, idx, rcn int) int {
-		// wrap over and underflow
-		i := 3 * abs
-		if i != 0 {
-			i = i % 30
-		}
-		return i + rcn
-	}
+}
+func (d *digit) backupRows() {
 	for i := 3; i > 0; i-- {
 		i := i
 		(*d.buf).Lock()
-		(*d.buf).b[0] = digRows[idx(d.abs, i, 0)]
-		(*d.buf).b[1] = digRows[idx(d.abs, i, 1)]
-		(*d.buf).b[2] = digRows[idx(d.abs, i, 2)]
+		(*d.buf).b[0] = digRows[d.abs*3+i+1-2]
+		(*d.buf).b[1] = digRows[d.abs*3+i+2-2]
+		(*d.buf).b[2] = digRows[d.abs*3+i+3-2]
 		(*d.buf).Unlock()
 		time.Sleep(delay)
 	}
 }
-
 func newDigit() *digit {
 	// initialize as digit zero
 	return &digit{
